@@ -25,13 +25,21 @@ export interface GeminiKeyConfig {
 }
 
 export interface ProviderKeyConfig {
-  apiKey: string;
+  // New fields for multi-key support
+  name?: string;
+  apiKeyEntries?: string[];  // Array of API keys
+  
+  // Legacy field for backward compatibility
+  apiKey?: string;
+  
+  // Common fields
   prefix?: string;
   baseUrl?: string;
-  proxyUrl?: string;
+  proxyUrl?: string;  // Shared by all keys in this provider
   headers?: Record<string, string>;
   models?: ModelAlias[];
   excludedModels?: string[];
+  priority?: number;
 }
 
 export interface OpenAIProviderConfig {

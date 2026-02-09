@@ -62,6 +62,18 @@ export default defineConfig({
       }
     }
   },
+  server: {
+    proxy: {
+      '/v0': {
+        target: 'http://localhost:8317',
+        changeOrigin: true,
+      },
+      '/v1': {
+        target: 'http://localhost:8317',
+        changeOrigin: true,
+      }
+    }
+  },
   build: {
     target: 'es2015',
     outDir: 'dist',

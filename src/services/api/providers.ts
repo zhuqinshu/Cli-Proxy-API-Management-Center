@@ -57,17 +57,48 @@ const serializeApiKeyEntry = (entry: ApiKeyEntry) => {
 };
 
 const serializeProviderKey = (config: ProviderKeyConfig) => {
-  const payload: Record<string, unknown> = { 'api-key': config.apiKey };
-  if (config.prefix?.trim()) payload.prefix = config.prefix.trim();
+  const payload: Record<string, unknown> = {};
+  
+  // Name (required for new format)
+  if (config.name?.trim()) payload.name = config.name.trim();
+  
+  // Base URL
   if (config.baseUrl) payload['base-url'] = config.baseUrl;
-  if (config.proxyUrl) payload['proxy-url'] = config.proxyUrl;
+  
+  // Prefix
+  if (config.prefix?.trim()) payload.prefix = config.prefix.trim();
+  
+  // Proxy URL (provider-level, shared by all keys)
+  if (config.proxyUrl?.trim()) payload['proxy-url'] = config.proxyUrl.trim();
+  
+  // API Key Entries (new format: string array)
+  if (Array.isArray(config.apiKeyEntries) && config.apiKeyEntries.length > 0) {
+    payload['api-key-entries'] = config.apiKeyEntries
+      .map(key => key.trim())
+      .filter(Boolean);
+  } else if (config.apiKey) {
+    // Backward compatibility: if only apiKey exists, convert to array
+    payload['api-key-entries'] = [config.apiKey.trim()];
+  }
+  
+  // Headers
   const headers = serializeHeaders(config.headers);
   if (headers) payload.headers = headers;
+  
+  // Models
   const models = serializeModelAliases(config.models);
   if (models && models.length) payload.models = models;
+  
+  // Excluded models
   if (config.excludedModels && config.excludedModels.length) {
     payload['excluded-models'] = config.excludedModels;
   }
+  
+  // Priority
+  if (config.priority !== undefined) {
+    payload.priority = config.priority;
+  }
+  
   return payload;
 };
 

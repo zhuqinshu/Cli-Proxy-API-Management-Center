@@ -169,8 +169,8 @@ export function AiProvidersPage() {
       const current = geminiKeys[index];
       if (!current) return;
 
-      const switchingKey = `${provider}:${current.apiKey}`;
-      setConfigSwitchingKey(switchingKey);
+		const switchingKey = `${provider}:${current.apiKey}`;
+		setConfigSwitchingKey(switchingKey);
 
       const previousList = geminiKeys;
       const nextExcluded = enabled
@@ -205,8 +205,9 @@ export function AiProvidersPage() {
     const current = source[index];
     if (!current) return;
 
-    const switchingKey = `${provider}:${current.apiKey}`;
-    setConfigSwitchingKey(switchingKey);
+	    const switchingIdentifier = current.name?.trim() || current.apiKeyEntries?.[0] || current.apiKey || String(index);
+	    const switchingKey = `${provider}:${switchingIdentifier}`;
+	    setConfigSwitchingKey(switchingKey);
 
     const previousList = source;
     const nextExcluded = enabled
@@ -256,26 +257,38 @@ export function AiProvidersPage() {
     const source = type === 'codex' ? codexConfigs : claudeConfigs;
     const entry = source[index];
     if (!entry) return;
-    showConfirmation({
+	    showConfirmation({
       title: t(`ai_providers.${type}_delete_title`, { defaultValue: `Delete ${type === 'codex' ? 'Codex' : 'Claude'} Config` }),
       message: t(`ai_providers.${type}_delete_confirm`),
       variant: 'danger',
       confirmText: t('common.confirm'),
-      onConfirm: async () => {
-        try {
-          if (type === 'codex') {
-            await providersApi.deleteCodexConfig(entry.apiKey);
-            const next = codexConfigs.filter((_, idx) => idx !== index);
-            setCodexConfigs(next);
-            updateConfigValue('codex-api-key', next);
-            clearCache('codex-api-key');
-            showNotification(t('notification.codex_config_deleted'), 'success');
-          } else {
-            await providersApi.deleteClaudeConfig(entry.apiKey);
-            const next = claudeConfigs.filter((_, idx) => idx !== index);
-            setClaudeConfigs(next);
-            updateConfigValue('claude-api-key', next);
-            clearCache('claude-api-key');
+	      onConfirm: async () => {
+	        try {
+	          if (type === 'codex') {
+	            const apiKey = entry.apiKey || entry.apiKeyEntries?.[0] || '';
+	            if (apiKey) {
+	              await providersApi.deleteCodexConfig(apiKey);
+	            } else {
+	              const next = codexConfigs.filter((_, idx) => idx !== index);
+	              await providersApi.saveCodexConfigs(next);
+	            }
+	            const next = codexConfigs.filter((_, idx) => idx !== index);
+	            setCodexConfigs(next);
+	            updateConfigValue('codex-api-key', next);
+	            clearCache('codex-api-key');
+	            showNotification(t('notification.codex_config_deleted'), 'success');
+	          } else {
+	            const apiKey = entry.apiKey || entry.apiKeyEntries?.[0] || '';
+	            if (apiKey) {
+	              await providersApi.deleteClaudeConfig(apiKey);
+	            } else {
+	              const next = claudeConfigs.filter((_, idx) => idx !== index);
+	              await providersApi.saveClaudeConfigs(next);
+	            }
+	            const next = claudeConfigs.filter((_, idx) => idx !== index);
+	            setClaudeConfigs(next);
+	            updateConfigValue('claude-api-key', next);
+	            clearCache('claude-api-key');
             showNotification(t('notification.claude_config_deleted'), 'success');
           }
         } catch (err: unknown) {

@@ -113,21 +113,58 @@ const normalizeApiKeyEntry = (entry: unknown): ApiKeyEntry | null => {
 const normalizeProviderKeyConfig = (item: unknown): ProviderKeyConfig | null => {
   if (item === undefined || item === null) return null;
   const record = isRecord(item) ? item : null;
-  const apiKey = record?.['api-key'] ?? record?.apiKey ?? (typeof item === 'string' ? item : '');
-  const trimmed = String(apiKey || '').trim();
-  if (!trimmed) return null;
-
-  const config: ProviderKeyConfig = { apiKey: trimmed };
+  
+  const name = record?.name;
+  const baseUrl = record ? record['base-url'] ?? record.baseUrl : undefined;
+  
+  // Process API Key Entries (new format: string array)
+  let apiKeyEntries: string[] = [];
+  if (Array.isArray(record?.['api-key-entries'])) {
+    apiKeyEntries = record['api-key-entries']
+      .map((entry) => {
+        // Support both string and object formats
+        if (typeof entry === 'string') {
+          return entry.trim();
+        }
+        if (isRecord(entry) && entry['api-key']) {
+          return String(entry['api-key']).trim();
+        }
+        return '';
+      })
+      .filter(Boolean);
+  }
+  
+  // Backward compatibility: if no api-key-entries, try old format
+  if (apiKeyEntries.length === 0) {
+    const apiKey = record?.['api-key'] ?? record?.apiKey ?? (typeof item === 'string' ? item : '');
+    const trimmed = String(apiKey || '').trim();
+    if (trimmed) {
+      apiKeyEntries = [trimmed];
+    }
+  }
+  
+  // Must have at least one valid API key
+  if (apiKeyEntries.length === 0) return null;
+  
+  const config: ProviderKeyConfig = {
+    apiKeyEntries,
+    baseUrl: baseUrl ? String(baseUrl) : undefined,
+  };
+  
+  if (name) config.name = String(name);
+  
   const prefix = normalizePrefix(record?.prefix ?? record?.['prefix']);
   if (prefix) config.prefix = prefix;
-  const baseUrl = record ? record['base-url'] ?? record.baseUrl : undefined;
+  
   const proxyUrl = record ? record['proxy-url'] ?? record.proxyUrl : undefined;
-  if (baseUrl) config.baseUrl = String(baseUrl);
   if (proxyUrl) config.proxyUrl = String(proxyUrl);
+  
   const headers = normalizeHeaders(record?.headers);
   if (headers) config.headers = headers;
+  
   const models = normalizeModelAliases(record?.models);
   if (models.length) config.models = models;
+  
   const excludedModels = normalizeExcludedModels(
     record?.['excluded-models'] ??
       record?.excludedModels ??
@@ -135,6 +172,10 @@ const normalizeProviderKeyConfig = (item: unknown): ProviderKeyConfig | null => 
       record?.excluded_models
   );
   if (excludedModels.length) config.excludedModels = excludedModels;
+  
+  const priority = record?.priority;
+  if (priority !== undefined) config.priority = Number(priority);
+  
   return config;
 };
 

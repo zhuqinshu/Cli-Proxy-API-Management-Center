@@ -20,7 +20,8 @@ import layoutStyles from './AiProvidersEditLayout.module.scss';
 type LocationState = { fromAiProviders?: boolean } | null;
 
 const buildEmptyForm = (): ProviderFormState => ({
-  apiKey: '',
+  name: '',
+  apiKeyEntries: [''],  // Array of API keys
   prefix: '',
   baseUrl: '',
   proxyUrl: '',
@@ -124,10 +125,16 @@ export function AiProvidersClaudeEditPage() {
 
     if (initialData) {
       setForm({
-        ...initialData,
+        name: initialData.name || '',
+        apiKeyEntries: initialData.apiKeyEntries || [''],
+        prefix: initialData.prefix || '',
+        baseUrl: initialData.baseUrl || '',
+        proxyUrl: initialData.proxyUrl || '',
         headers: headersToEntries(initialData.headers),
         modelEntries: modelsToEntries(initialData.models),
         excludedText: excludedModelsToText(initialData.excludedModels),
+        models: initialData.models,
+        excludedModels: initialData.excludedModels,
       });
       return;
     }
@@ -139,14 +146,35 @@ export function AiProvidersClaudeEditPage() {
   const handleSave = useCallback(async () => {
     if (!canSave) return;
 
+    const trimmedName = (form.name ?? '').trim();
+    const trimmedBaseUrl = (form.baseUrl ?? '').trim();
+    
+    if (!trimmedName) {
+      showNotification(t('notification.claude_name_required'), 'error');
+      return;
+    }
+    
+    if (!trimmedBaseUrl) {
+      showNotification(t('notification.claude_base_url_required'), 'error');
+      return;
+    }
+    
+    // Validate at least one valid API key
+    const validKeys = (form.apiKeyEntries || []).filter(key => key.trim());
+    if (validKeys.length === 0) {
+      showNotification(t('notification.claude_api_key_required'), 'error');
+      return;
+    }
+
     setSaving(true);
     setError('');
     try {
       const payload: ProviderKeyConfig = {
-        apiKey: form.apiKey.trim(),
+        name: trimmedName,
         prefix: form.prefix?.trim() || undefined,
-        baseUrl: (form.baseUrl ?? '').trim() || undefined,
+        baseUrl: trimmedBaseUrl,
         proxyUrl: form.proxyUrl?.trim() || undefined,
+        apiKeyEntries: validKeys.map(key => key.trim()),
         headers: buildHeaderObject(form.headers),
         models: form.modelEntries
           .map((entry) => {
@@ -191,6 +219,62 @@ export function AiProvidersClaudeEditPage() {
     updateConfigValue,
   ]);
 
+  const renderKeyEntries = (entries: string[]) => {
+    const list = entries.length ? entries : [''];
+
+    const updateEntry = (idx: number, value: string) => {
+      const next = list.map((entry, i) => (i === idx ? value : entry));
+      setForm((prev) => ({ ...prev, apiKeyEntries: next }));
+    };
+
+    const removeEntry = (idx: number) => {
+      const next = list.filter((_, i) => i !== idx);
+      setForm((prev) => ({
+        ...prev,
+        apiKeyEntries: next.length ? next : [''],
+      }));
+    };
+
+    const addEntry = () => {
+      setForm((prev) => ({ ...prev, apiKeyEntries: [...list, ''] }));
+    };
+
+    return (
+      <div className="stack">
+        {list.map((entry, index) => (
+          <div key={index} className="item-row">
+            <div className="item-meta">
+              <Input
+                label={`${t('common.api_key')} #${index + 1}`}
+                value={entry}
+                onChange={(e) => updateEntry(index, e.target.value)}
+                disabled={saving || disableControls}
+              />
+            </div>
+            <div className="item-actions">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeEntry(index)}
+                disabled={saving || disableControls || list.length <= 1}
+              >
+                {t('common.delete')}
+              </Button>
+            </div>
+          </div>
+        ))}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={addEntry}
+          disabled={saving || disableControls}
+        >
+          {t('ai_providers.claude_keys_add_btn')}
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <SecondaryScreenShell
       ref={swipeRef}
@@ -214,11 +298,17 @@ export function AiProvidersClaudeEditPage() {
         ) : (
           <>
             <Input
-              label={t('ai_providers.claude_add_modal_key_label')}
-              value={form.apiKey}
-              onChange={(e) => setForm((prev) => ({ ...prev, apiKey: e.target.value }))}
+              label={t('ai_providers.claude_add_modal_name_label')}
+              value={form.name ?? ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              hint={t('ai_providers.name_hint')}
               disabled={disableControls || saving}
             />
+            <div className="form-group">
+              <label>{t('ai_providers.claude_add_modal_keys_label')}</label>
+              <div className="hint">{t('ai_providers.multi_keys_hint')}</div>
+              {renderKeyEntries(form.apiKeyEntries || [])}
+            </div>
             <Input
               label={t('ai_providers.prefix_label')}
               placeholder={t('ai_providers.prefix_placeholder')}

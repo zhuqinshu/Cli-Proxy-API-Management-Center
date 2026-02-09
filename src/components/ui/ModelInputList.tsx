@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useId } from 'react';
 import { Button } from './Button';
 import { IconX } from './icons';
 import type { ModelEntry } from './modelInputListUtils';
@@ -10,6 +10,7 @@ interface ModelInputListProps {
   disabled?: boolean;
   namePlaceholder?: string;
   aliasPlaceholder?: string;
+  knownModels?: string[];
 }
 
 export function ModelInputList({
@@ -18,9 +19,11 @@ export function ModelInputList({
   addLabel,
   disabled = false,
   namePlaceholder = 'model-name',
-  aliasPlaceholder = 'alias (optional)'
+  aliasPlaceholder = 'alias (optional)',
+  knownModels = [],
 }: ModelInputListProps) {
   const currentEntries = entries.length ? entries : [{ name: '', alias: '' }];
+  const datalistId = useId();
 
   const updateEntry = (index: number, field: 'name' | 'alias', value: string) => {
     const next = currentEntries.map((entry, idx) => (idx === index ? { ...entry, [field]: value } : entry));
@@ -38,6 +41,13 @@ export function ModelInputList({
 
   return (
     <div className="header-input-list">
+      {knownModels.length > 0 && (
+        <datalist id={datalistId}>
+          {knownModels.map((model) => (
+            <option key={model} value={model} />
+          ))}
+        </datalist>
+      )}
       {currentEntries.map((entry, index) => (
         <Fragment key={index}>
           <div className="header-input-row">
@@ -47,6 +57,7 @@ export function ModelInputList({
               value={entry.name}
               onChange={(e) => updateEntry(index, 'name', e.target.value)}
               disabled={disabled}
+              list={knownModels.length > 0 ? datalistId : undefined}
             />
             <span className="header-separator">→</span>
             <input
