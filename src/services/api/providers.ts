@@ -184,8 +184,8 @@ export const providersApi = {
   updateCodexConfig: (index: number, value: ProviderKeyConfig) =>
     apiClient.patch('/codex-api-key', { index, value: serializeProviderKey(value) }),
 
-  deleteCodexConfig: (apiKey: string) =>
-    apiClient.delete(`/codex-api-key?api-key=${encodeURIComponent(apiKey)}`),
+  deleteCodexConfig: (index: number) =>
+    apiClient.delete(`/codex-api-key?index=${index}`),
 
   async getClaudeConfigs(): Promise<ProviderKeyConfig[]> {
     const data = await apiClient.get('/claude-api-key');
@@ -199,8 +199,8 @@ export const providersApi = {
   updateClaudeConfig: (index: number, value: ProviderKeyConfig) =>
     apiClient.patch('/claude-api-key', { index, value: serializeProviderKey(value) }),
 
-  deleteClaudeConfig: (apiKey: string) =>
-    apiClient.delete(`/claude-api-key?api-key=${encodeURIComponent(apiKey)}`),
+  deleteClaudeConfig: (index: number) =>
+    apiClient.delete(`/claude-api-key?index=${index}`),
 
   async getVertexConfigs(): Promise<ProviderKeyConfig[]> {
     const data = await apiClient.get('/vertex-api-key');

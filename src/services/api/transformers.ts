@@ -119,15 +119,19 @@ const normalizeProviderKeyConfig = (item: unknown): ProviderKeyConfig | null => 
   
   // Process API Key Entries (new format: string array)
   let apiKeyEntries: string[] = [];
-  if (Array.isArray(record?.['api-key-entries'])) {
-    apiKeyEntries = record['api-key-entries']
+  const rawApiKeyEntries = record?.['api-key-entries'] ?? record?.apiKeyEntries;
+  if (Array.isArray(rawApiKeyEntries)) {
+    apiKeyEntries = rawApiKeyEntries
       .map((entry) => {
         // Support both string and object formats
         if (typeof entry === 'string') {
           return entry.trim();
         }
-        if (isRecord(entry) && entry['api-key']) {
-          return String(entry['api-key']).trim();
+        if (isRecord(entry)) {
+          const entryValue = entry['api-key'] ?? entry.apiKey;
+          if (entryValue !== undefined && entryValue !== null) {
+            return String(entryValue).trim();
+          }
         }
         return '';
       })

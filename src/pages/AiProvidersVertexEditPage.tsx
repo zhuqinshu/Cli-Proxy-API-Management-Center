@@ -151,8 +151,14 @@ export function AiProvidersVertexEditPage() {
     setSaving(true);
     setError('');
     try {
+      const apiKey = (form.apiKey ?? '').trim();
+      if (!apiKey) {
+        showNotification(t('notification.vertex_key_required'), 'error');
+        return;
+      }
+
       const payload: ProviderKeyConfig = {
-        apiKey: form.apiKey.trim(),
+        apiKey,
         prefix: form.prefix?.trim() || undefined,
         baseUrl,
         proxyUrl: form.proxyUrl?.trim() || undefined,

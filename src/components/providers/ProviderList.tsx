@@ -6,12 +6,14 @@ import { EmptyState } from '@/components/ui/EmptyState';
 interface ProviderListProps<T> {
   items: T[];
   loading: boolean;
-  keyField: (item: T) => string;
+  keyField: (item: T, index: number) => string;
   renderContent: (item: T, index: number) => ReactNode;
   onEdit: (index: number) => void;
+  onCopy?: (index: number) => void;
   onDelete: (index: number) => void;
   emptyTitle: string;
   emptyDescription: string;
+  copyLabel?: string;
   deleteLabel?: string;
   actionsDisabled?: boolean;
   getRowDisabled?: (item: T, index: number) => boolean;
@@ -24,9 +26,11 @@ export function ProviderList<T>({
   keyField,
   renderContent,
   onEdit,
+  onCopy,
   onDelete,
   emptyTitle,
   emptyDescription,
+  copyLabel,
   deleteLabel,
   actionsDisabled = false,
   getRowDisabled,
@@ -48,7 +52,7 @@ export function ProviderList<T>({
         const rowDisabled = getRowDisabled ? getRowDisabled(item, index) : false;
         return (
           <div
-            key={keyField(item)}
+            key={keyField(item, index)}
             className="item-row"
             style={rowDisabled ? { opacity: 0.6 } : undefined}
           >
@@ -62,6 +66,16 @@ export function ProviderList<T>({
               >
                 {t('common.edit')}
               </Button>
+              {onCopy ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onCopy(index)}
+                  disabled={actionsDisabled}
+                >
+                  {copyLabel || t('common.copy')}
+                </Button>
+              ) : null}
               <Button
                 variant="danger"
                 size="sm"

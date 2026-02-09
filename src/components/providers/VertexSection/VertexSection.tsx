@@ -14,7 +14,7 @@ import {
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
-import { getStatsBySource } from '../utils';
+import { getPrimaryApiKey, getProviderConfigIdentifier, getStatsBySource } from '../utils';
 
 interface VertexSectionProps {
   configs: ProviderKeyConfig[];
@@ -46,15 +46,16 @@ export function VertexSection({
     const cache = new Map<string, ReturnType<typeof calculateStatusBarData>>();
 
     configs.forEach((config) => {
-      if (!config.apiKey) return;
+      const apiKey = getPrimaryApiKey(config);
+      if (!apiKey) return;
       const candidates = buildCandidateUsageSourceIds({
-        apiKey: config.apiKey,
+        apiKey,
         prefix: config.prefix,
       });
       if (!candidates.length) return;
       const candidateSet = new Set(candidates);
       const filteredDetails = usageDetails.filter((detail) => candidateSet.has(detail.source));
-      cache.set(config.apiKey, calculateStatusBarData(filteredDetails));
+      cache.set(apiKey, calculateStatusBarData(filteredDetails));
     });
 
     return cache;
@@ -78,16 +79,17 @@ export function VertexSection({
         <ProviderList<ProviderKeyConfig>
           items={configs}
           loading={loading}
-          keyField={(item) => item.apiKey}
+          keyField={(item, index) => getProviderConfigIdentifier(item, `vertex-${index}`)}
           emptyTitle={t('ai_providers.vertex_empty_title')}
           emptyDescription={t('ai_providers.vertex_empty_desc')}
           onEdit={onEdit}
           onDelete={onDelete}
           actionsDisabled={actionsDisabled}
           renderContent={(item, index) => {
-            const stats = getStatsBySource(item.apiKey, keyStats, item.prefix);
+            const apiKey = getPrimaryApiKey(item);
+            const stats = getStatsBySource(apiKey, keyStats, item.prefix);
             const headerEntries = Object.entries(item.headers || {});
-            const statusData = statusBarCache.get(item.apiKey) || calculateStatusBarData([]);
+            const statusData = statusBarCache.get(apiKey) || calculateStatusBarData([]);
 
             return (
               <Fragment>
@@ -96,7 +98,7 @@ export function VertexSection({
                 </div>
                 <div className={styles.fieldRow}>
                   <span className={styles.fieldLabel}>{t('common.api_key')}:</span>
-                  <span className={styles.fieldValue}>{maskApiKey(item.apiKey)}</span>
+                  <span className={styles.fieldValue}>{maskApiKey(apiKey)}</span>
                 </div>
                 {item.prefix && (
                   <div className={styles.fieldRow}>

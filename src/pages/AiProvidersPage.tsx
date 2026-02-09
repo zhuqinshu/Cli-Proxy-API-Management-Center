@@ -12,6 +12,7 @@ import {
   useProviderStats,
 } from '@/components/providers';
 import {
+  getPrimaryApiKey,
   withDisableAllModelsRule,
   withoutDisableAllModelsRule,
 } from '@/components/providers/utils';
@@ -265,26 +266,14 @@ export function AiProvidersPage() {
 	      onConfirm: async () => {
 	        try {
 	          if (type === 'codex') {
-	            const apiKey = entry.apiKey || entry.apiKeyEntries?.[0] || '';
-	            if (apiKey) {
-	              await providersApi.deleteCodexConfig(apiKey);
-	            } else {
-	              const next = codexConfigs.filter((_, idx) => idx !== index);
-	              await providersApi.saveCodexConfigs(next);
-	            }
+	            await providersApi.deleteCodexConfig(index);
 	            const next = codexConfigs.filter((_, idx) => idx !== index);
 	            setCodexConfigs(next);
 	            updateConfigValue('codex-api-key', next);
 	            clearCache('codex-api-key');
 	            showNotification(t('notification.codex_config_deleted'), 'success');
 	          } else {
-	            const apiKey = entry.apiKey || entry.apiKeyEntries?.[0] || '';
-	            if (apiKey) {
-	              await providersApi.deleteClaudeConfig(apiKey);
-	            } else {
-	              const next = claudeConfigs.filter((_, idx) => idx !== index);
-	              await providersApi.saveClaudeConfigs(next);
-	            }
+	            await providersApi.deleteClaudeConfig(index);
 	            const next = claudeConfigs.filter((_, idx) => idx !== index);
 	            setClaudeConfigs(next);
 	            updateConfigValue('claude-api-key', next);
@@ -299,6 +288,44 @@ export function AiProvidersPage() {
     });
   };
 
+  const duplicateProviderEntry = async (type: 'codex' | 'claude', index: number) => {
+    const source = type === 'codex' ? codexConfigs : claudeConfigs;
+    const entry = source[index];
+    if (!entry) return;
+
+    const baseName = (entry.name || `${type}-provider`).trim() || `${type}-provider`;
+    const nextName = `${baseName}-copy`;
+    const duplicated: ProviderKeyConfig = {
+      ...entry,
+      name: nextName,
+      apiKeyEntries: entry.apiKeyEntries ? [...entry.apiKeyEntries] : undefined,
+      headers: entry.headers ? { ...entry.headers } : undefined,
+      models: entry.models ? entry.models.map((model) => ({ ...model })) : undefined,
+      excludedModels: entry.excludedModels ? [...entry.excludedModels] : undefined,
+    };
+
+    const nextList = [...source, duplicated];
+
+    try {
+      if (type === 'codex') {
+        await providersApi.saveCodexConfigs(nextList);
+        setCodexConfigs(nextList);
+        updateConfigValue('codex-api-key', nextList);
+        clearCache('codex-api-key');
+        showNotification(t('notification.codex_config_added'), 'success');
+      } else {
+        await providersApi.saveClaudeConfigs(nextList);
+        setClaudeConfigs(nextList);
+        updateConfigValue('claude-api-key', nextList);
+        clearCache('claude-api-key');
+        showNotification(t('notification.claude_config_added'), 'success');
+      }
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
+      showNotification(`${t('notification.update_failed')}: ${message}`, 'error');
+    }
+  };
+
   const deleteVertex = async (index: number) => {
     const entry = vertexConfigs[index];
     if (!entry) return;
@@ -309,7 +336,13 @@ export function AiProvidersPage() {
       confirmText: t('common.confirm'),
       onConfirm: async () => {
         try {
-          await providersApi.deleteVertexConfig(entry.apiKey);
+          const apiKey = getPrimaryApiKey(entry);
+          if (apiKey) {
+            await providersApi.deleteVertexConfig(apiKey);
+          } else {
+            const next = vertexConfigs.filter((_, idx) => idx !== index);
+            await providersApi.saveVertexConfigs(next);
+          }
           const next = vertexConfigs.filter((_, idx) => idx !== index);
           setVertexConfigs(next);
           updateConfigValue('vertex-api-key', next);
@@ -379,6 +412,7 @@ export function AiProvidersPage() {
             resolvedTheme={resolvedTheme}
             onAdd={() => openEditor('/ai-providers/codex/new')}
             onEdit={(index) => openEditor(`/ai-providers/codex/${index}`)}
+            onCopy={(index) => void duplicateProviderEntry('codex', index)}
             onDelete={(index) => void deleteProviderEntry('codex', index)}
             onToggle={(index, enabled) => void setConfigEnabled('codex', index, enabled)}
           />
@@ -394,6 +428,7 @@ export function AiProvidersPage() {
             isSwitching={isSwitching}
             onAdd={() => openEditor('/ai-providers/claude/new')}
             onEdit={(index) => openEditor(`/ai-providers/claude/${index}`)}
+            onCopy={(index) => void duplicateProviderEntry('claude', index)}
             onDelete={(index) => void deleteProviderEntry('claude', index)}
             onToggle={(index, enabled) => void setConfigEnabled('claude', index, enabled)}
           />

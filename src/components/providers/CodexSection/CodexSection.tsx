@@ -8,7 +8,6 @@ import iconCodexDark from '@/assets/icons/codex_drak.svg';
 import type { ProviderKeyConfig } from '@/types';
 import { maskApiKey } from '@/utils/format';
 import {
-  buildCandidateUsageSourceIds,
   calculateStatusBarData,
   type KeyStats,
   type UsageDetail,
@@ -16,7 +15,13 @@ import {
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
-import { getStatsBySource, hasDisableAllModelsRule } from '../utils';
+import {
+  buildProviderUsageSourceIds,
+  getProviderApiKeys,
+  getProviderConfigIdentifier,
+  getStatsByProviderApiKeys,
+  hasDisableAllModelsRule,
+} from '../utils';
 
 interface CodexSectionProps {
   configs: ProviderKeyConfig[];
@@ -28,6 +33,7 @@ interface CodexSectionProps {
   resolvedTheme: string;
   onAdd: () => void;
   onEdit: (index: number) => void;
+  onCopy: (index: number) => void;
   onDelete: (index: number) => void;
   onToggle: (index: number, enabled: boolean) => void;
 }
@@ -42,6 +48,7 @@ export function CodexSection({
   resolvedTheme,
   onAdd,
   onEdit,
+  onCopy,
   onDelete,
   onToggle,
 }: CodexSectionProps) {
@@ -52,16 +59,14 @@ export function CodexSection({
   const statusBarCache = useMemo(() => {
     const cache = new Map<string, ReturnType<typeof calculateStatusBarData>>();
 
-    configs.forEach((config) => {
-      if (!config.apiKey) return;
-      const candidates = buildCandidateUsageSourceIds({
-        apiKey: config.apiKey,
-        prefix: config.prefix,
-      });
-      if (!candidates.length) return;
-      const candidateSet = new Set(candidates);
+    configs.forEach((config, index) => {
+      const itemId = getProviderConfigIdentifier(config, `codex-${index}`);
+      const apiKeys = getProviderApiKeys(config);
+      const sourceIds = buildProviderUsageSourceIds(apiKeys, config.prefix);
+      if (!sourceIds.length) return;
+      const candidateSet = new Set(sourceIds);
       const filteredDetails = usageDetails.filter((detail) => candidateSet.has(detail.source));
-      cache.set(config.apiKey, calculateStatusBarData(filteredDetails));
+      cache.set(itemId, calculateStatusBarData(filteredDetails));
     });
 
     return cache;
@@ -89,10 +94,11 @@ export function CodexSection({
         <ProviderList<ProviderKeyConfig>
           items={configs}
           loading={loading}
-          keyField={(item) => item.apiKey}
+          keyField={(item, index) => getProviderConfigIdentifier(item, `codex-${index}`)}
           emptyTitle={t('ai_providers.codex_empty_title')}
           emptyDescription={t('ai_providers.codex_empty_desc')}
           onEdit={onEdit}
+          onCopy={onCopy}
           onDelete={onDelete}
           actionsDisabled={actionsDisabled}
           getRowDisabled={(item) => hasDisableAllModelsRule(item.excludedModels)}
@@ -104,19 +110,25 @@ export function CodexSection({
               onChange={(value) => void onToggle(index, value)}
             />
           )}
-          renderContent={(item) => {
-            const stats = getStatsBySource(item.apiKey, keyStats, item.prefix);
+          renderContent={(item, index) => {
+            const itemId = getProviderConfigIdentifier(item, `codex-${index}`);
+            const apiKeys = getProviderApiKeys(item);
+            const stats = getStatsByProviderApiKeys(apiKeys, keyStats, item.prefix);
             const headerEntries = Object.entries(item.headers || {});
             const configDisabled = hasDisableAllModelsRule(item.excludedModels);
             const excludedModels = item.excludedModels ?? [];
-            const statusData = statusBarCache.get(item.apiKey) || calculateStatusBarData([]);
+            const statusData = statusBarCache.get(itemId) || calculateStatusBarData([]);
 
             return (
               <Fragment>
                 <div className="item-title">{t('ai_providers.codex_item_title')}</div>
                 <div className={styles.fieldRow}>
                   <span className={styles.fieldLabel}>{t('common.api_key')}:</span>
-                  <span className={styles.fieldValue}>{maskApiKey(item.apiKey)}</span>
+                  <span className={styles.fieldValue}>
+                    {apiKeys.length > 0
+                      ? apiKeys.map((key) => maskApiKey(key)).join(', ')
+                      : t('common.none')}
+                  </span>
                 </div>
                 {item.prefix && (
                   <div className={styles.fieldRow}>
