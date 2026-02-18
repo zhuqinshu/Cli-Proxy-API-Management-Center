@@ -728,6 +728,8 @@
     "requests_trend": "Request Trends",
     "tokens_trend": "Token Usage Trends",
     "api_details": "API Details",
+    "provider_details": "Provider Details",
+    "credential_details": "Credential Details",
     "by_hour": "By Hour",
     "by_day": "By Day",
     "refresh": "Refresh",

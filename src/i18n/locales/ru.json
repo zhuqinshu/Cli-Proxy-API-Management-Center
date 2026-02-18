@@ -722,6 +722,8 @@
     "requests_trend": "Динамика запросов",
     "tokens_trend": "Динамика токенов",
     "api_details": "Детали API",
+    "provider_details": "Детали провайдера",
+    "credential_details": "Детали учётных данных",
     "by_hour": "По часам",
     "by_day": "По дням",
     "refresh": "Обновить",

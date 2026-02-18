@@ -728,6 +728,8 @@
     "requests_trend": "请求趋势",
     "tokens_trend": "Token 使用趋势",
     "api_details": "API 详细统计",
+    "provider_details": "渠道详细统计",
+    "credential_details": "凭证详细统计",
     "by_hour": "按小时",
     "by_day": "按天",
     "refresh": "刷新",

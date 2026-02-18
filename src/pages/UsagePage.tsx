@@ -27,7 +27,7 @@ import {
   useSparklines,
   useChartData
 } from '@/components/usage';
-import { getModelNamesFromUsage, getApiStats, getModelStats } from '@/utils/usage';
+import { getModelNamesFromUsage, getApiStats, getModelStats, getProviderStats, getCredentialStats } from '@/utils/usage';
 import styles from './UsagePage.module.scss';
 
 // Register Chart.js components
@@ -95,6 +95,8 @@ export function UsagePage() {
   const modelNames = useMemo(() => getModelNamesFromUsage(usage), [usage]);
   const apiStats = useMemo(() => getApiStats(usage, modelPrices), [usage, modelPrices]);
   const modelStats = useMemo(() => getModelStats(usage, modelPrices), [usage, modelPrices]);
+  const providerStats = useMemo(() => getProviderStats(usage, modelPrices), [usage, modelPrices]);
+  const credentialStats = useMemo(() => getCredentialStats(usage, modelPrices), [usage, modelPrices]);
   const hasPrices = Object.keys(modelPrices).length > 0;
 
   return (
@@ -199,6 +201,8 @@ export function UsagePage() {
       <div className={styles.detailsGrid}>
         <ApiDetailsCard apiStats={apiStats} loading={loading} hasPrices={hasPrices} />
         <ModelStatsCard modelStats={modelStats} loading={loading} hasPrices={hasPrices} />
+        <ApiDetailsCard apiStats={providerStats} loading={loading} hasPrices={hasPrices} title={t('usage_stats.provider_details')} />
+        <ApiDetailsCard apiStats={credentialStats} loading={loading} hasPrices={hasPrices} title={t('usage_stats.credential_details')} />
       </div>
 
       {/* Price Settings */}

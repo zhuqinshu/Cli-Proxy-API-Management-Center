@@ -20,7 +20,7 @@ import {
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useAuthStore, useConfigStore, useNotificationStore } from '@/stores';
 import { logsApi } from '@/services/api/logs';
-import { MANAGEMENT_API_PREFIX } from '@/utils/constants';
+import { MANAGEMENT_API_PREFIX, LOG_FETCH_LIMIT } from '@/utils/constants';
 import { formatUnixTimestamp } from '@/utils/format';
 import styles from './LogsPage.module.scss';
 
@@ -433,7 +433,7 @@ export function LogsPage() {
       pendingScrollToBottomRef.current = !incremental || isNearBottom(logViewerRef.current);
 
       const params =
-        incremental && latestTimestampRef.current > 0 ? { after: latestTimestampRef.current } : {};
+        incremental && latestTimestampRef.current > 0 ? { after: latestTimestampRef.current, limit: LOG_FETCH_LIMIT } : { limit: LOG_FETCH_LIMIT };
       const data = await logsApi.fetchLogs(params);
 
       // 更新时间戳

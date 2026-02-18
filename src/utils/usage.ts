@@ -67,10 +67,14 @@ const MODEL_PRICE_STORAGE_KEY = 'cli-proxy-model-prices-v2';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
-const getApisRecord = (usageData: unknown): Record<string, unknown> | null => {
+const getRecordByKey = (usageData: unknown, key: string): Record<string, unknown> | null => {
   const usageRecord = isRecord(usageData) ? usageData : null;
-  const apisRaw = usageRecord ? usageRecord.apis : null;
-  return isRecord(apisRaw) ? apisRaw : null;
+  const raw = usageRecord ? usageRecord[key] : null;
+  return isRecord(raw) ? raw : null;
+};
+
+const getApisRecord = (usageData: unknown): Record<string, unknown> | null => {
+  return getRecordByKey(usageData, 'apis');
 };
 
 const normalizeAuthIndex = (value: unknown) => {
@@ -635,6 +639,103 @@ export function getApiStats(usageData: unknown, modelPrices: Record<string, Mode
   });
 
   return result;
+}
+
+/**
+ * 从指定维度获取统计数据（通用版本）
+ */
+function getGroupedStats(usageData: unknown, groupKey: string, modelPrices: Record<string, ModelPrice>): ApiStats[] {
+  const records = getRecordByKey(usageData, groupKey);
+  if (!records) return [];
+  const result: ApiStats[] = [];
+
+  Object.entries(records).forEach(([endpoint, apiData]) => {
+    if (!isRecord(apiData)) return;
+    const models: Record<string, { requests: number; successCount: number; failureCount: number; tokens: number }> = {};
+    let derivedSuccessCount = 0;
+    let derivedFailureCount = 0;
+    let totalCost = 0;
+
+    const modelsData = isRecord(apiData.models) ? apiData.models : {};
+    Object.entries(modelsData).forEach(([modelName, modelData]) => {
+      if (!isRecord(modelData)) return;
+      const details = Array.isArray(modelData.details) ? modelData.details : [];
+      const hasExplicitCounts =
+        typeof modelData.success_count === 'number' || typeof modelData.failure_count === 'number';
+
+      let successCount = 0;
+      let failureCount = 0;
+      if (hasExplicitCounts) {
+        successCount += Number(modelData.success_count) || 0;
+        failureCount += Number(modelData.failure_count) || 0;
+      }
+
+      const price = modelPrices[modelName];
+      if (details.length > 0 && (!hasExplicitCounts || price)) {
+        details.forEach((detail) => {
+          const detailRecord = isRecord(detail) ? detail : null;
+          if (!hasExplicitCounts) {
+            if (detailRecord?.failed === true) {
+              failureCount += 1;
+            } else {
+              successCount += 1;
+            }
+          }
+
+          if (price && detailRecord) {
+            totalCost += calculateCost(
+              { ...(detailRecord as unknown as UsageDetail), __modelName: modelName },
+              modelPrices
+            );
+          }
+        });
+      }
+
+      models[modelName] = {
+        requests: Number(modelData.total_requests) || 0,
+        successCount,
+        failureCount,
+        tokens: Number(modelData.total_tokens) || 0
+      };
+      derivedSuccessCount += successCount;
+      derivedFailureCount += failureCount;
+    });
+
+    const hasApiExplicitCounts =
+      typeof apiData.success_count === 'number' || typeof apiData.failure_count === 'number';
+    const successCount = hasApiExplicitCounts
+      ? (Number(apiData.success_count) || 0)
+      : derivedSuccessCount;
+    const failureCount = hasApiExplicitCounts
+      ? (Number(apiData.failure_count) || 0)
+      : derivedFailureCount;
+
+    result.push({
+      endpoint: groupKey === 'apis' ? (maskUsageSensitiveValue(endpoint) || endpoint) : endpoint,
+      totalRequests: Number(apiData.total_requests) || 0,
+      successCount,
+      failureCount,
+      totalTokens: Number(apiData.total_tokens) || 0,
+      totalCost,
+      models
+    });
+  });
+
+  return result;
+}
+
+/**
+ * 获取 Provider 统计数据
+ */
+export function getProviderStats(usageData: unknown, modelPrices: Record<string, ModelPrice>): ApiStats[] {
+  return getGroupedStats(usageData, 'providers', modelPrices);
+}
+
+/**
+ * 获取 Credential 统计数据
+ */
+export function getCredentialStats(usageData: unknown, modelPrices: Record<string, ModelPrice>): ApiStats[] {
+  return getGroupedStats(usageData, 'credentials', modelPrices);
 }
 
 /**

@@ -8,9 +8,10 @@ export interface ApiDetailsCardProps {
   apiStats: ApiStats[];
   loading: boolean;
   hasPrices: boolean;
+  title?: string;
 }
 
-export function ApiDetailsCard({ apiStats, loading, hasPrices }: ApiDetailsCardProps) {
+export function ApiDetailsCard({ apiStats, loading, hasPrices, title }: ApiDetailsCardProps) {
   const { t } = useTranslation();
   const [expandedApis, setExpandedApis] = useState<Set<string>>(new Set());
 
@@ -27,7 +28,7 @@ export function ApiDetailsCard({ apiStats, loading, hasPrices }: ApiDetailsCardP
   };
 
   return (
-    <Card title={t('usage_stats.api_details')}>
+    <Card title={title || t('usage_stats.api_details')}>
       {loading ? (
         <div className={styles.hint}>{t('common.loading')}</div>
       ) : apiStats.length > 0 ? (
