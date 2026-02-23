@@ -198,6 +198,7 @@
     "excluded_models_placeholder": "Через запятую или с новой строки, например gemini-1.5-pro, gemini-1.5-flash",
     "excluded_models_hint": "Оставьте пустым, чтобы разрешить все модели; значения автоматически обрезаются и дедуплицируются.",
     "excluded_models_count": "Исключено моделей: {{count}}",
+    "available_models_count": "{{count}} доступных моделей (runtime)",
     "prefix_label": "Префикс (необязательно):",
     "prefix_placeholder": "например: team-a",
     "prefix_hint": "Если задано, обращайтесь к моделям как prefix/<model>, чтобы выбрать эту запись.",

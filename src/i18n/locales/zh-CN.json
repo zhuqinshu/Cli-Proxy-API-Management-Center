@@ -198,6 +198,7 @@
     "excluded_models_placeholder": "用逗号或换行分隔，例如: gemini-1.5-pro, gemini-1.5-flash",
     "excluded_models_hint": "留空表示不过滤；保存时会自动去重并忽略空白。",
     "excluded_models_count": "排除 {{count}} 个模型",
+    "available_models_count": "{{count}} 个可用模型 (运行时)",
     "prefix_label": "前缀 (可选):",
     "prefix_placeholder": "例如: team-a",
     "prefix_hint": "设置后可用 prefix/<model> 选择该条目。",

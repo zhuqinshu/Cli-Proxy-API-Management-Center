@@ -42,6 +42,21 @@ export interface ProviderKeyConfig {
   priority?: number;
 }
 
+export interface AvailableModelInfo {
+  id: string;
+  display_name?: string;
+  type?: string;
+  owned_by?: string;
+  context_length?: number;
+  max_completion_tokens?: number;
+}
+
+export interface ChannelModelsGroup {
+  config_key: string;
+  models: AvailableModelInfo[];
+  count: number;
+}
+
 export interface OpenAIProviderConfig {
   name: string;
   prefix?: string;

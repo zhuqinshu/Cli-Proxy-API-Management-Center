@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import iconVertex from '@/assets/icons/vertex.svg';
-import type { ProviderKeyConfig } from '@/types';
+import type { ProviderKeyConfig, ChannelModelsGroup } from '@/types';
 import { maskApiKey } from '@/utils/format';
 import {
   buildCandidateUsageSourceIds,
@@ -14,6 +14,7 @@ import {
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
+import { AvailableModelsList } from '../AvailableModelsList';
 import { getPrimaryApiKey, getProviderConfigIdentifier, getStatsBySource } from '../utils';
 
 interface VertexSectionProps {
@@ -26,6 +27,7 @@ interface VertexSectionProps {
   onAdd: () => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
+  availableModels?: ChannelModelsGroup[];
 }
 
 export function VertexSection({
@@ -38,6 +40,7 @@ export function VertexSection({
   onAdd,
   onEdit,
   onDelete,
+  availableModels,
 }: VertexSectionProps) {
   const { t } = useTranslation();
   const actionsDisabled = disableControls || loading || isSwitching;
@@ -142,6 +145,11 @@ export function VertexSection({
                     ))}
                   </div>
                 ) : null}
+                <AvailableModelsList models={
+                  (availableModels || []).find(
+                    (ch) => ch.config_key === getPrimaryApiKey(item)
+                  )?.models || []
+                } />
                 <div className={styles.cardStats}>
                   <span className={`${styles.statPill} ${styles.statSuccess}`}>
                     {t('stats.success')}: {stats.success}

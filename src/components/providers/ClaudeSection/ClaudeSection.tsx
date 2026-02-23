@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import iconClaude from '@/assets/icons/claude.svg';
-import type { ProviderKeyConfig } from '@/types';
+import type { ProviderKeyConfig, ChannelModelsGroup } from '@/types';
 import { maskApiKey } from '@/utils/format';
 import {
   calculateStatusBarData,
@@ -14,6 +14,7 @@ import {
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
+import { AvailableModelsList } from '../AvailableModelsList';
 import {
   buildProviderUsageSourceIds,
   getProviderApiKeys,
@@ -34,6 +35,7 @@ interface ClaudeSectionProps {
   onCopy: (index: number) => void;
   onDelete: (index: number) => void;
   onToggle: (index: number, enabled: boolean) => void;
+  availableModels?: ChannelModelsGroup[];
 }
 
 export function ClaudeSection({
@@ -48,6 +50,7 @@ export function ClaudeSection({
   onCopy,
   onDelete,
   onToggle,
+  availableModels,
 }: ClaudeSectionProps) {
   const { t } = useTranslation();
   const actionsDisabled = disableControls || loading || isSwitching;
@@ -184,6 +187,11 @@ export function ClaudeSection({
                     </div>
                   </div>
                 ) : null}
+                <AvailableModelsList models={
+                  (availableModels || []).find(
+                    (ch) => ch.config_key === item.name || (item.apiKeyEntries?.length && ch.config_key === item.apiKeyEntries[0]) || ch.config_key === item.apiKey
+                  )?.models || []
+                } />
                 <div className={styles.cardStats}>
                   <span className={`${styles.statPill} ${styles.statSuccess}`}>
                     {t('stats.success')}: {stats.success}

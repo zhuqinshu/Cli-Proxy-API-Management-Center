@@ -10,6 +10,7 @@ import {
   VertexSection,
   ProviderNav,
   useProviderStats,
+  useAvailableModels,
 } from '@/components/providers';
 import {
   getPrimaryApiKey,
@@ -60,6 +61,7 @@ export function AiProvidersPage() {
   const isSwitching = Boolean(configSwitchingKey);
 
   const { keyStats, usageDetails, loadKeyStats } = useProviderStats();
+  const { availableModels, loadAvailableModels } = useAvailableModels();
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
@@ -114,7 +116,8 @@ export function AiProvidersPage() {
     hasMounted.current = true;
     loadConfigs();
     loadKeyStats();
-  }, [loadConfigs, loadKeyStats]);
+    loadAvailableModels();
+  }, [loadConfigs, loadKeyStats, loadAvailableModels]);
 
   useEffect(() => {
     if (config?.geminiApiKeys) setGeminiKeys(config.geminiApiKeys);
@@ -394,6 +397,7 @@ export function AiProvidersPage() {
             loading={loading}
             disableControls={disableControls}
             isSwitching={isSwitching}
+            availableModels={availableModels['gemini']}
             onAdd={() => openEditor('/ai-providers/gemini/new')}
             onEdit={(index) => openEditor(`/ai-providers/gemini/${index}`)}
             onDelete={deleteGemini}
@@ -410,6 +414,7 @@ export function AiProvidersPage() {
             disableControls={disableControls}
             isSwitching={isSwitching}
             resolvedTheme={resolvedTheme}
+            availableModels={availableModels['codex']}
             onAdd={() => openEditor('/ai-providers/codex/new')}
             onEdit={(index) => openEditor(`/ai-providers/codex/${index}`)}
             onCopy={(index) => void duplicateProviderEntry('codex', index)}
@@ -426,6 +431,7 @@ export function AiProvidersPage() {
             loading={loading}
             disableControls={disableControls}
             isSwitching={isSwitching}
+            availableModels={availableModels['claude']}
             onAdd={() => openEditor('/ai-providers/claude/new')}
             onEdit={(index) => openEditor(`/ai-providers/claude/${index}`)}
             onCopy={(index) => void duplicateProviderEntry('claude', index)}
@@ -442,6 +448,7 @@ export function AiProvidersPage() {
             loading={loading}
             disableControls={disableControls}
             isSwitching={isSwitching}
+            availableModels={availableModels['vertex']}
             onAdd={() => openEditor('/ai-providers/vertex/new')}
             onEdit={(index) => openEditor(`/ai-providers/vertex/${index}`)}
             onDelete={deleteVertex}

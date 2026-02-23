@@ -13,7 +13,9 @@ import type {
   OpenAIProviderConfig,
   ProviderKeyConfig,
   ApiKeyEntry,
-  ModelAlias
+  ModelAlias,
+  AvailableModelInfo,
+  ChannelModelsGroup
 } from '@/types';
 
 const serializeHeaders = (headers?: Record<string, string>) => (headers && Object.keys(headers).length ? headers : undefined);
@@ -230,5 +232,26 @@ export const providersApi = {
     apiClient.patch('/openai-compatibility', { index, value: serializeOpenAIProvider(value) }),
 
   deleteOpenAIProvider: (name: string) =>
-    apiClient.delete(`/openai-compatibility?name=${encodeURIComponent(name)}`)
+    apiClient.delete(`/openai-compatibility?name=${encodeURIComponent(name)}`),
+
+  async getAvailableModels(provider: string): Promise<{ models: AvailableModelInfo[]; channels: ChannelModelsGroup[] }> {
+    const data = await apiClient.get(`/available-models/${encodeURIComponent(provider)}`);
+    const result = isRecord(data) ? data : {};
+    const models = Array.isArray(result.models) ? result.models as AvailableModelInfo[] : [];
+    const channels = Array.isArray(result.channels) ? result.channels as ChannelModelsGroup[] : [];
+    return { models, channels };
+  },
+
+  async getAllAvailableModels(): Promise<Record<string, ChannelModelsGroup[]>> {
+    const providers = ['gemini', 'codex', 'claude', 'vertex'] as const;
+    const results = await Promise.allSettled(
+      providers.map((p) => providersApi.getAvailableModels(p))
+    );
+    const map: Record<string, ChannelModelsGroup[]> = {};
+    providers.forEach((p, i) => {
+      const r = results[i];
+      map[p] = r.status === 'fulfilled' ? r.value.channels : [];
+    });
+    return map;
+  }
 };

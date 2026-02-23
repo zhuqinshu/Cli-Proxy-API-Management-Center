@@ -224,6 +224,72 @@
   margin-bottom: 4px;
 }
 
+// 可用模型区块
+.availableModelsSection {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-secondary);
+}
+
+.availableModelsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}
+
+.availableModelsLabel {
+  white-space: nowrap;
+}
+
+.availableModelsChevron {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.availableModelsChevronOpen {
+  transform: rotate(90deg);
+}
+
+.availableModelsTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.availableModelTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--success-badge-bg, #d1fae5);
+  color: var(--success-badge-text, #065f46);
+  border: 1px solid var(--success-badge-border, #6ee7b7);
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 12px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
 // API密钥条目列表（二级卡片）
 .apiKeyEntriesSection {
   margin-top: 10px;
@@ -502,6 +568,24 @@
 
   .excludedModelsLabel {
     color: #fde68a;
+  }
+
+  .availableModelTag {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #86efac;
+
+    .modelName {
+      color: #86efac;
+    }
+  }
+
+  .availableModelsToggle {
+    color: var(--text-tertiary);
+
+    &:hover {
+      color: var(--primary-color);
+    }
   }
 
   .apiKeyEntryCard {
